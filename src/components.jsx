@@ -45,7 +45,7 @@ export const ProviderIcon = ({ provider, className = "w-full h-full" }) => {
 
 // --- COMPONENTS ---
 
-export const StatusBadge = ({ status }) => {
+export const StatusBadge = ({ status, onStatusChange, itemId }) => {
   const config = {
     backlog: { color: 'bg-slate-700 text-slate-300', icon: List, label: 'In Lista' },
     playing: { color: 'bg-amber-500/20 text-amber-400 border border-amber-500/30', icon: Clock, label: 'In Corso' },
@@ -53,14 +53,37 @@ export const StatusBadge = ({ status }) => {
   };
   const current = config[status] || config.backlog;
   const Icon = current.icon;
+
+  if (!onStatusChange || !itemId) {
+    return (
+      <span className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${current.color}`}>
+        <Icon size={10} className="sm:w-3 sm:h-3" /> {current.label}
+      </span>
+    );
+  }
+
   return (
-    <span className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${current.color}`}>
-      <Icon size={10} className="sm:w-3 sm:h-3" /> {current.label}
-    </span>
+    <div className="group/badge relative flex items-center">
+      <span className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 shadow-md hover:shadow-lg ${current.color}`}>
+        <Icon size={10} className="sm:w-3 sm:h-3" /> {current.label}
+      </span>
+      <div className="absolute left-0 top-0 flex gap-1 opacity-0 pointer-events-none group-hover/badge:opacity-100 group-hover/badge:pointer-events-auto transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] bg-slate-950/95 backdrop-blur-xl p-1 rounded-full shadow-2xl border border-white/10 z-50 origin-left scale-95 group-hover/badge:scale-100 group-hover/badge:-translate-x-1">
+        {Object.entries(config).map(([key, val]) => (
+          <button 
+            key={key}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onStatusChange(itemId, key); }}
+            className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-300 ease-out hover:scale-105 ${status === key ? val.color : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+          >
+            <val.icon size={10} className="sm:w-3 sm:h-3" /> {val.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };
 
-export const RatingStars = ({ rating, setRating, readOnly = false }) => {
+export const RatingStars = ({ rating, setRating, readOnly = false, size }) => {
+  const iconSize = size || (readOnly ? 12 : 20);
   return (
     <div className="flex gap-0.5 sm:gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -69,12 +92,13 @@ export const RatingStars = ({ rating, setRating, readOnly = false }) => {
           type="button"
           disabled={readOnly}
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             if (!readOnly && setRating) setRating(star);
           }}
-          className={`${readOnly ? 'cursor-default' : 'cursor-pointer hover:scale-110 transition-transform'}`}
+          className={`${readOnly ? 'cursor-default' : 'cursor-pointer hover:scale-125 transition-transform duration-300 ease-out'}`}
         >
-          <Star size={readOnly ? 12 : 20} className={`${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-slate-700 text-slate-600'}`} />
+          <Star size={iconSize} className={`${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-slate-700 text-slate-600 hover:fill-slate-500 hover:text-slate-500'}`} />
         </button>
       ))}
     </div>
@@ -180,7 +204,7 @@ export const SettingsModal = ({ isOpen, onClose, config, onSave, dbStatus, onUpl
   );
 };
 
-export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, onUpdateProgress }) => {
+export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, onUpdateProgress, onUpdateRating }) => {
   const isCompact = viewMode === 'compact';
   const isList = viewMode === 'list';
 
@@ -225,9 +249,14 @@ export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, 
         <img src={item.image} alt={item.title} className="w-12 h-16 object-cover rounded shadow-md" onError={(e) => { e.target.src = 'https://placehold.co/100x150/1e293b/FFF'; }} />
         <div className="flex-grow flex flex-col justify-center">
            <h3 className="text-sm font-bold text-slate-100">{item.title}</h3>
-           <div className="text-xs text-slate-400 mt-0.5">{item.category.toUpperCase()} • {item.genre[0] || 'Genere'}</div>
+           <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+             <span>{item.category.toUpperCase()} • {item.genre[0] || 'Genere'}</span>
+             <div className={`transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden flex items-center ${item.rating > 0 ? 'max-w-[100px] opacity-100' : 'max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100'}`}>
+               <RatingStars rating={item.rating || 0} setRating={(r) => onUpdateRating(item.id, r)} size={10} />
+             </div>
+           </div>
         </div>
-        <StatusBadge status={item.status} />
+        <StatusBadge status={item.status} onStatusChange={onStatusChange} itemId={item.id} />
         <ActionButtons />
       </div>
     );
@@ -241,13 +270,20 @@ export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, 
         <div className="absolute inset-0 bg-gradient-to-t from-[#06080d] via-[#06080d]/40 to-transparent opacity-90 transition-opacity duration-300" />
         <ActionButtons />
         
-        <div className="absolute top-3 left-3 z-20 shadow-lg"><StatusBadge status={item.status} /></div>
+        <div className="absolute top-3 left-3 z-20 shadow-lg"><StatusBadge status={item.status} onStatusChange={onStatusChange} itemId={item.id} /></div>
 
         <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col z-20 translate-y-3 group-hover:translate-y-0 transition-transform duration-300 ease-out">
           <h3 className={`font-black text-white leading-tight drop-shadow-md mb-1 ${isCompact ? 'text-sm' : 'text-lg'}`}>{item.title}</h3>
           
           <div className="flex flex-wrap gap-1 mb-2">
             {item.genre && item.genre.slice(0, isCompact?1:2).map((g, idx) => (<span key={idx} className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-bold border ${getGenreColor(g)} backdrop-blur-sm`}>{g}</span>))}
+          </div>
+
+          <div className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${item.rating > 0 ? 'max-h-8 mb-2 opacity-100' : 'max-h-0 mb-0 opacity-0 group-hover:max-h-8 group-hover:mb-2 group-hover:opacity-100'}`}>
+            <div className="flex items-center gap-2">
+              {!isCompact && <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest drop-shadow-md">Voto</span>}
+              <RatingStars rating={item.rating || 0} setRating={(r) => onUpdateRating(item.id, r)} size={isCompact ? 10 : 12} />
+            </div>
           </div>
 
           {!isCompact && item.category !== 'movie' && (
@@ -276,7 +312,7 @@ export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, 
           <img src={item.image} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-300" onError={(e) => { e.target.src = 'https://placehold.co/600x300/1e293b/FFF?text=Screenshot'; }} />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d1218] to-transparent" />
           <ActionButtons />
-          <div className="absolute bottom-2 left-3 z-20 shadow-lg"><StatusBadge status={item.status} /></div>
+          <div className="absolute bottom-2 left-3 z-20 shadow-lg"><StatusBadge status={item.status} onStatusChange={onStatusChange} itemId={item.id} /></div>
         </div>
 
         <div className="p-3 flex flex-col justify-between flex-grow">
@@ -286,13 +322,15 @@ export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, 
            </div>
            
            {!isCompact && (
-             <div className="mt-3 flex justify-between items-center pt-3 border-t border-slate-800/80">
-               {item.status !== 'playing' ? (
-                 <button onClick={() => onStatusChange(item.id, 'playing')} className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-1 rounded transition-colors uppercase tracking-wider">Start</button>
-               ) : (
-                 <button onClick={() => onStatusChange(item.id, 'finished')} className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-1 rounded transition-colors uppercase tracking-wider">Finish</button>
-               )}
-               <ProvidersBar />
+             <div className="mt-auto pt-3 border-t border-slate-800/80 flex justify-between items-center">
+               <div className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${item.rating > 0 ? 'max-h-8 opacity-100' : 'max-h-0 opacity-0 group-hover:max-h-8 group-hover:opacity-100'}`}>
+                 <div className="flex items-center gap-2">
+                   <RatingStars rating={item.rating || 0} setRating={(r) => onUpdateRating(item.id, r)} size={12} />
+                 </div>
+               </div>
+               <div className="ml-auto">
+                 <ProvidersBar />
+               </div>
              </div>
            )}
         </div>
@@ -312,11 +350,18 @@ export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, 
         <div className="absolute inset-0 bg-gradient-to-t from-[#151210] via-transparent to-transparent opacity-90" />
         
         <ActionButtons />
-        <div className="absolute top-2 right-2 z-20 scale-90 origin-top-right"><StatusBadge status={item.status} /></div>
+        <div className="absolute top-2 right-2 z-20 scale-90 origin-top-right"><StatusBadge status={item.status} onStatusChange={onStatusChange} itemId={item.id} /></div>
 
         <div className="relative z-20 mt-auto p-3 flex flex-col w-full bg-gradient-to-t from-black via-black/80 to-transparent">
           <h3 className={`font-bold text-[#f4eee6] leading-tight drop-shadow-md mb-1 ${isCompact ? 'text-[10px]' : 'text-sm'}`}>{item.title}</h3>
           
+          <div className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${item.rating > 0 ? 'max-h-8 mb-1 opacity-100' : 'max-h-0 mb-0 opacity-0 group-hover:max-h-8 group-hover:mb-1 group-hover:opacity-100'}`}>
+            <div className="flex items-center gap-2">
+              {!isCompact && <span className="text-[9px] font-bold text-[#8c7e6a] uppercase tracking-widest drop-shadow-md">Voto</span>}
+              <RatingStars rating={item.rating || 0} setRating={(r) => onUpdateRating(item.id, r)} size={isCompact ? 10 : 12} />
+            </div>
+          </div>
+
           {!isCompact && (
             <div className="mt-1 flex items-center justify-between text-[10px] font-medium text-[#cbb59e] bg-[#2a221c]/80 px-2 py-1.5 rounded border border-[#3b342e]">
                <span className="flex items-center gap-1"><BookOpen size={10} className="text-yellow-600"/> {item.currentPage||0} / {item.totalPages||'?'}</span>

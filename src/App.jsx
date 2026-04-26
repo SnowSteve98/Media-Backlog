@@ -140,6 +140,15 @@ export default function MediaBacklogApp() {
     }
   };
 
+  const handleUpdateRating = async (id, newRating) => {
+    if (db) {
+      const item = items.find(i => i.id === id);
+      if (item) await setDoc(doc(db, "media_items", id), { ...item, rating: newRating });
+    } else {
+      setItems(prev => prev.map(item => item.id === id ? { ...item, rating: newRating } : item));
+    }
+  };
+
   const handleStatusChange = async (id, newStatus) => {
     if (db) {
       const item = items.find(i => i.id === id);
@@ -320,7 +329,7 @@ export default function MediaBacklogApp() {
         {filteredItems.length === 0 ? <div className="text-center py-20 text-slate-500">Nessun elemento trovato.</div> : 
           <div className={`grid ${getGridClasses()}`}>
             {filteredItems.map(item => (
-              <Card key={item.id} item={item} viewMode={viewMode} onRequestDelete={handleRequestDelete} onEdit={handleEdit} onStatusChange={handleStatusChange} onUpdateProgress={handleUpdateProgress} />
+              <Card key={item.id} item={item} viewMode={viewMode} onRequestDelete={handleRequestDelete} onEdit={handleEdit} onStatusChange={handleStatusChange} onUpdateProgress={handleUpdateProgress} onUpdateRating={handleUpdateRating} />
             ))}
           </div>
         }
