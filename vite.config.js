@@ -5,6 +5,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   // Questa riga è fondamentale per GitHub Pages:
-  // Imposta i percorsi come relativi (./) invece che assoluti (/)
-  base: './', 
+  // Usa il nome esatto della repository (case-sensitive) tra gli slash
+  base: '/Media-Backlog/', 
 })
