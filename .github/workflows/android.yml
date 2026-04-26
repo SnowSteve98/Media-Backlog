@@ -50,11 +50,14 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
           
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/MediaBacklog_v1.0.${{ github.run_number }}.apk
+          
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MediaBacklog-Android-v1.0.${{ github.run_number }}
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/MediaBacklog_v1.0.${{ github.run_number }}.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -62,7 +65,7 @@ jobs:
           tag_name: Android-v1.0.${{ github.run_number }}
           name: Media Backlog v1.0.${{ github.run_number }}
           generate_release_notes: true
-          files: android/app/build/outputs/apk/release/app-release.apk
+          files: android/app/build/outputs/apk/release/MediaBacklog_v1.0.${{ github.run_number }}.apk
           draft: false
           prerelease: false
         env:
