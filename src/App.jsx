@@ -241,8 +241,8 @@ export default function MediaBacklogApp() {
   const getGridClasses = () => {
     switch (viewMode) {
       case 'list': return 'grid-cols-1 max-w-3xl mx-auto';
-      case 'compact': return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2';
-      default: return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6'; 
+      case 'compact': return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 items-start';
+      default: return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6 items-start'; 
     }
   };
 

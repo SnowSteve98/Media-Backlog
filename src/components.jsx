@@ -181,15 +181,6 @@ export const SettingsModal = ({ isOpen, onClose, config, onSave, dbStatus, onUpl
 };
 
 export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, onUpdateProgress }) => {
-  const categoryConfig = {
-    movie: { color: 'border-purple-500/30 hover:border-purple-500/50', label: 'Film' },
-    series: { color: 'border-orange-500/30 hover:border-orange-500/50', label: 'Serie TV' },
-    game: { color: 'border-green-500/30 hover:border-green-500/50', label: 'Gioco' },
-    book: { color: 'border-yellow-500/30 hover:border-yellow-500/50', label: 'Libro' },
-    anime: { color: 'border-pink-500/30 hover:border-pink-500/50', label: 'Anime' },
-    comic: { color: 'border-blue-500/30 hover:border-blue-500/50', label: 'Fumetto' },
-  };
-  const config = categoryConfig[item.category] || categoryConfig.movie;
   const isCompact = viewMode === 'compact';
   const isList = viewMode === 'list';
 
@@ -203,83 +194,142 @@ export const Card = ({ item, viewMode, onRequestDelete, onEdit, onStatusChange, 
     return current;
   };
 
-  return (
-    <div className={`group relative flex ${isList ? 'flex-row h-40' : 'flex-col'} bg-slate-800 rounded-xl overflow-hidden border border-slate-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${config.color}`}>
-      <div className={`relative ${isList ? 'w-28' : isCompact ? 'h-32' : 'h-40 sm:h-48'} overflow-hidden bg-slate-900 flex-shrink-0`}>
-        <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100" onError={(e) => { e.target.src = 'https://placehold.co/600x600/1e293b/FFF?text=No+Image'; }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
-        
-        {!isList && (
-          <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3 flex justify-between items-end">
-            <StatusBadge status={item.status} />
-            {item.status === 'finished' && !isCompact && <RatingStars rating={item.rating || 0} readOnly />}
-          </div>
-        )}
-
-        <div className="absolute top-2 right-2 flex gap-1.5 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-          <button onClick={(e) => { e.stopPropagation(); onEdit(item); }} className="p-1 sm:p-1.5 bg-slate-900/90 rounded-full text-blue-400 hover:bg-blue-500 hover:text-white transition-colors border border-slate-700 shadow-lg"><Edit2 size={12} className="sm:w-3.5 sm:h-3.5" /></button>
-          <button onClick={(e) => { e.stopPropagation(); onRequestDelete(item.id); }} className="p-1 sm:p-1.5 bg-slate-900/90 rounded-full text-red-400 hover:bg-red-500 hover:text-white transition-colors border border-slate-700 shadow-lg"><Trash2 size={12} className="sm:w-3.5 sm:h-3.5" /></button>
-        </div>
-      </div>
-
-      <div className={`p-3 sm:p-4 flex flex-col flex-grow ${isList ? 'justify-between' : ''}`}>
-        <div>
-          <div className="flex justify-between items-start mb-1 sm:mb-2">
-            <h3 className={`${isCompact ? 'text-xs' : 'text-sm sm:text-lg'} font-bold text-slate-100 leading-tight line-clamp-1`}>{item.title}</h3>
-            {isList && <StatusBadge status={item.status} />}
-          </div>
-          <div className="flex flex-wrap gap-1 mb-2 sm:mb-3">{item.genre && item.genre.slice(0, 2).map((g, idx) => (<span key={idx} className={`text-[9px] sm:text-[10px] uppercase tracking-wider px-1 py-0.5 sm:px-1.5 rounded font-semibold border ${getGenreColor(g)}`}>{g}</span>))}</div>
-          {!isCompact && <p className="text-[10px] sm:text-sm text-slate-400 line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4 flex-grow">{item.description || "Nessuna descrizione."}</p>}
-        </div>
-
-        <div>
-          {/* STREAMING ICONS ROW */}
-          {item.providers && item.providers.length > 0 && !isCompact && (
-            <div className="flex gap-1.5 mb-2 overflow-x-auto no-scrollbar pb-1">
-              {item.providers.map(provId => {
-                const provider = STREAMING_PROVIDERS.find(p => p.id === provId);
-                if(!provider) return null;
-                return (
-                  <div key={provId} className="w-5 h-5 min-w-[20px] rounded-md bg-slate-900 border border-slate-700 flex items-center justify-center p-0.5 overflow-hidden" title={provider.name}>
-                    <ProviderIcon provider={provider} />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {(item.category === 'series' || item.category === 'anime') && (
-            <div className="mb-2 sm:mb-3 bg-slate-900/50 p-1.5 sm:p-2 rounded-lg border border-slate-700/50">
-              <div className="flex items-center justify-between gap-1 sm:gap-2 text-[10px] sm:text-xs text-slate-300">
-                <div className="flex items-center gap-1">
-                  <Hash size={10} className="sm:w-3 sm:h-3 text-orange-400"/>
-                  {item.category === 'series' && (<><span>Stg <strong className="text-white">{item.season || 1}</strong></span><span className="text-slate-600 mx-0.5">|</span></>)}
-                  <div className="flex items-center gap-1"><span>Ep</span><button onClick={(e) => { e.stopPropagation(); onUpdateProgress(item.id, -1); }} className="hover:text-white text-slate-500 cursor-pointer p-0.5"><Minus size={10}/></button><strong className="text-white">{item.episode || 1}</strong><button onClick={(e) => { e.stopPropagation(); onUpdateProgress(item.id, 1); }} className="hover:text-white text-slate-500 cursor-pointer p-0.5"><Plus size={10}/></button></div>
-                </div>
-              </div>
-              <ProgressBar current={item.status === 'backlog' ? 0 : getSeriesProgress()} total={item.totalEpisodes} label="Avanzamento" />
-            </div>
-          )}
-          {(item.category === 'book' || item.category === 'comic') && (
-            <div className="mb-2 sm:mb-3 bg-slate-900/50 p-1.5 sm:p-2 rounded-lg border border-slate-700/50">
-              <div className="flex items-center justify-between gap-1 sm:gap-2 text-[10px] sm:text-xs text-slate-300">
-                <div className="flex items-center gap-1">{item.category === 'comic' && item.issueNumber && (<span className="mr-1 sm:mr-2 text-blue-400 font-bold">#{item.issueNumber}</span>)}<BookOpen size={10} className="sm:w-3 sm:h-3 text-yellow-400"/><span>Pag <strong className="text-white">{item.currentPage || 0}</strong></span></div>
-                {item.totalPages > 0 && <span className="text-[8px] sm:text-[10px] text-slate-500">/{item.totalPages}</span>}
-              </div>
-              <ProgressBar current={item.status === 'backlog' ? 0 : item.currentPage || 0} total={item.totalPages} label="Lettura" subLabel={`${item.currentPage || 0} di ${item.totalPages} pag.`} />
-            </div>
-          )}
-          <div className="pt-2 sm:pt-3 border-t border-slate-700/50 flex justify-between items-center">
-            <div className="flex gap-1">
-              {item.status !== 'playing' && (<button onClick={() => onStatusChange(item.id, 'playing')} className="text-[10px] sm:text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition-colors">Inizia</button>)}
-              {item.status === 'playing' && (<button onClick={() => onStatusChange(item.id, 'finished')} className="text-[10px] sm:text-xs text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition-colors">Finisci</button>)}
-            </div>
-            <span className="text-[8px] sm:text-[10px] text-slate-600 uppercase font-bold tracking-wider">{config.label}</span>
-          </div>
-        </div>
-      </div>
+  const ActionButtons = () => (
+    <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 translate-x-1 group-hover:translate-x-0">
+      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(item); }} className="p-1.5 bg-black/50 backdrop-blur-md rounded-full text-blue-300 hover:bg-blue-500 hover:text-white transition-colors border border-white/10"><Edit2 size={12}/></button>
+      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRequestDelete(item.id); }} className="p-1.5 bg-black/50 backdrop-blur-md rounded-full text-rose-300 hover:bg-rose-500 hover:text-white transition-colors border border-white/10"><Trash2 size={12}/></button>
     </div>
   );
+
+  const ProvidersBar = () => {
+    if (!item.providers || item.providers.length === 0 || isCompact || isList) return null;
+    return (
+      <div className="flex gap-1 mt-2">
+        {item.providers.map(provId => {
+          const provider = STREAMING_PROVIDERS.find(p => p.id === provId);
+          if(!provider) return null;
+          return (
+            <div key={provId} className="w-5 h-5 rounded overflow-hidden">
+              <ProviderIcon provider={provider} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // 1. LIST MODE (Minimal row)
+  if (isList) {
+    return (
+      <div className="group relative flex items-center gap-4 p-3 bg-[#0c0e12] border-b border-white/5 hover:bg-[#12161c] transition-colors">
+        <img src={item.image} alt={item.title} className="w-12 h-16 object-cover rounded shadow-md" onError={(e) => { e.target.src = 'https://placehold.co/100x150/1e293b/FFF'; }} />
+        <div className="flex-grow flex flex-col justify-center">
+           <h3 className="text-sm font-bold text-slate-100">{item.title}</h3>
+           <div className="text-xs text-slate-400 mt-0.5">{item.category.toUpperCase()} • {item.genre[0] || 'Genere'}</div>
+        </div>
+        <StatusBadge status={item.status} />
+        <ActionButtons />
+      </div>
+    );
+  }
+
+  // 2. FILMS, SERIES, ANIME (Cinematic Poster)
+  if (['movie', 'series', 'anime'].includes(item.category)) {
+    return (
+      <div className="group relative rounded-xl overflow-hidden bg-slate-950 aspect-[2/3] shadow-lg hover:shadow-2xl hover:shadow-indigo-500/20 transition-all duration-500 hover:-translate-y-1.5 border border-white/5 h-full">
+        <img src={item.image} alt={item.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-80 group-hover:opacity-100" onError={(e) => { e.target.src = 'https://placehold.co/600x900/1e293b/FFF?text=Poster'; }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#06080d] via-[#06080d]/40 to-transparent opacity-90 transition-opacity duration-300" />
+        <ActionButtons />
+        
+        <div className="absolute top-3 left-3 z-20 shadow-lg"><StatusBadge status={item.status} /></div>
+
+        <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col z-20 translate-y-3 group-hover:translate-y-0 transition-transform duration-300 ease-out">
+          <h3 className={`font-black text-white leading-tight drop-shadow-md mb-1 ${isCompact ? 'text-sm' : 'text-lg'}`}>{item.title}</h3>
+          
+          <div className="flex flex-wrap gap-1 mb-2">
+            {item.genre && item.genre.slice(0, isCompact?1:2).map((g, idx) => (<span key={idx} className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-bold border ${getGenreColor(g)} backdrop-blur-sm`}>{g}</span>))}
+          </div>
+
+          {!isCompact && item.category !== 'movie' && (
+            <div className="mt-2 flex items-center justify-between text-xs font-medium text-slate-200 bg-white/10 backdrop-blur-md px-2 py-1.5 rounded-lg border border-white/10">
+               <span className="flex items-center gap-1"><Hash size={12} className="text-orange-400"/> {item.category==='series' ? `S${item.season||1} E${item.episode||1}` : `Ep ${item.episode||1}`}</span>
+               <div className="flex gap-1.5">
+                 <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUpdateProgress(item.id, -1); }} className="hover:text-white bg-white/10 rounded p-0.5"><Minus size={12}/></button>
+                 <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUpdateProgress(item.id, 1); }} className="hover:text-white bg-white/10 rounded p-0.5"><Plus size={12}/></button>
+               </div>
+            </div>
+          )}
+
+          <ProvidersBar />
+        </div>
+      </div>
+    );
+  }
+
+  // 3. GAMES (Neon Ticket)
+  if (item.category === 'game') {
+    return (
+      <div className="group relative flex flex-col rounded-xl overflow-hidden bg-[#0d1218] shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-[1.02] border border-slate-800 h-full">
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-400 to-cyan-500 z-20" />
+        
+        <div className={`relative ${isCompact ? 'h-24' : 'h-36'} overflow-hidden flex-shrink-0`}>
+          <img src={item.image} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-300" onError={(e) => { e.target.src = 'https://placehold.co/600x300/1e293b/FFF?text=Screenshot'; }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d1218] to-transparent" />
+          <ActionButtons />
+          <div className="absolute bottom-2 left-3 z-20 shadow-lg"><StatusBadge status={item.status} /></div>
+        </div>
+
+        <div className="p-3 flex flex-col justify-between flex-grow">
+           <div>
+             <h3 className={`font-bold text-white leading-tight ${isCompact ? 'text-xs mb-1' : 'text-base mb-2'}`}>{item.title}</h3>
+             {!isCompact && <p className="text-xs text-slate-400 line-clamp-2">{item.description}</p>}
+           </div>
+           
+           {!isCompact && (
+             <div className="mt-3 flex justify-between items-center pt-3 border-t border-slate-800/80">
+               {item.status !== 'playing' ? (
+                 <button onClick={() => onStatusChange(item.id, 'playing')} className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-1 rounded transition-colors uppercase tracking-wider">Start</button>
+               ) : (
+                 <button onClick={() => onStatusChange(item.id, 'finished')} className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-1 rounded transition-colors uppercase tracking-wider">Finish</button>
+               )}
+               <ProvidersBar />
+             </div>
+           )}
+        </div>
+      </div>
+    );
+  }
+
+  // 4. BOOKS / COMICS (Book Spine Effect)
+  if (['book', 'comic'].includes(item.category)) {
+    return (
+      <div className="group relative flex rounded-xl overflow-hidden bg-[#1a1714] aspect-[3/4] shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 border border-[#3b342e] h-full">
+        {/* Spine shadow effect */}
+        <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black/80 to-transparent z-20 pointer-events-none" />
+        <div className="absolute left-4 top-0 bottom-0 w-[1px] bg-white/10 z-20 pointer-events-none" />
+        
+        <img src={item.image} alt={item.title} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" onError={(e) => { e.target.src = 'https://placehold.co/400x600/3b342e/FFF?text=Cover'; }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#151210] via-transparent to-transparent opacity-90" />
+        
+        <ActionButtons />
+        <div className="absolute top-2 right-2 z-20 scale-90 origin-top-right"><StatusBadge status={item.status} /></div>
+
+        <div className="relative z-20 mt-auto p-3 flex flex-col w-full bg-gradient-to-t from-black via-black/80 to-transparent">
+          <h3 className={`font-bold text-[#f4eee6] leading-tight drop-shadow-md mb-1 ${isCompact ? 'text-[10px]' : 'text-sm'}`}>{item.title}</h3>
+          
+          {!isCompact && (
+            <div className="mt-1 flex items-center justify-between text-[10px] font-medium text-[#cbb59e] bg-[#2a221c]/80 px-2 py-1.5 rounded border border-[#3b342e]">
+               <span className="flex items-center gap-1"><BookOpen size={10} className="text-yellow-600"/> {item.currentPage||0} / {item.totalPages||'?'}</span>
+               <div className="text-[#8c7e6a]">{item.totalPages ? Math.round(((item.currentPage||0) / item.totalPages) * 100) : 0}%</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback
+  return null;
 };
 
 
